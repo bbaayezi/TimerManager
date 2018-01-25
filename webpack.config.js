@@ -3,7 +3,7 @@ const webpack = require('webpack');
 
 module.exports = {
     entry: ['babel-polyfill', './src/TimerManager.js'],
-    resolve: ['.js', '.json'],
+    resolve: {extensions: ['.js', '.json']},
     module: {
         rules: [
             {
