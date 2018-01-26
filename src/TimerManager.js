@@ -1,53 +1,65 @@
-export default class TimerManager {
+import _ from 'underscore';
+
+class TimerManager {
     timers = [];
-    createTimer (name, options = {
+    createTimer (name, options = { // Options requires an Object
         type = string,
         handler = null,
-        timeout = number
+        timeout = 1000 // Default timeout set to 1000ms
     } = {}) {
-        switch (options.type) {
-            case "interval":
-            this.timers.push({name, timeout: options.timeout, type: options.type, observer: window.setInterval(options.handler, options.timeout), handler: options.handler})
-            break;
-            case "timeout":
-            this.timers.push({name, timeout: options.timeout, type: options.type, observer: window.setTimeout(options.handler, options.timeout), handler: options.handler})
-            break;
-        }
+        // Determine instance wheather set interval or set timeout
+        (options.type == "interval") ?
+        this.timers.push({
+            name, 
+            timeout: options.timeout, 
+            type: options.type, 
+            observer: window.setInterval(options.handler, options.timeout), 
+            handler: options.handler
+        }) :
+        this.timers.push({name, 
+            timeout: options.timeout, 
+            type: options.type, 
+            observer: window.setTimeout(options.handler, options.timeout), 
+            handler: options.handler
+        });
     }
 
     clearTimer (name) {
-        for (let i = 0; i < this.timers.length; i++) {
-            if (this.timers[i].name == name && this.timers[i].type == "interval") {
-                window.clearInterval(this.timers[i].observer);
-                this.timers.splice(i, 1);
-            } else if (this.timers[i].name == name && this.timers[i].type == "timeout") {
-                window.clearTimeout(this.timers[i].observer);
-                this.timers.splice(i, 1);
-            }
-        }
+        this.timers = _.without(this.timers, this.pauseTimer(name, true).value());
     }
 
-    pauseTimer (name) {
-        for (let i = 0; i < this.timers.length; i++) {
-            if (this.timers[i].name == name && this.timers[i].type == "interval") {
-                window.clearInterval(this.timers[i].observer);
-            } else if (this.timers[i].name == name && this.timers[i].type == "timeout") {
-                window.clearTimeout(this.timers[i].observer);
-            }
-        }
+    findTimer (name, isUnderscore = null) { // Second arguments used only in this class
+        return isUnderscore ?
+        _.chain(this.timers).findWhere({name}) :
+        _.chain(this.timers).findWhere({name}).value();
+    }
+
+    pauseTimer (name, requireReturn = null) { // Second arguments used only in this class
+        let clearObj = this.findTimer(name, true);
+        (clearObj.value().type == "interval") ?
+        window.clearInterval(clearObj.value().observer) :
+        window.clearTimeout(clearObj.value().observer);
+        return requireReturn ?
+        clearObj :
+        null
     }
 
     restartTimer (name) {
-        for (let i = 0; i < this.timers.length; i++) {
-            if (this.timers[i].name == name && this.timers[i].type == "interval") {
-                this.timers[i].observer = window.setInterval(this.timers[i].handler, this.timers[i].timeout);
-            } else if (this.timers[i].name == name && this.timers[i].type == "timeout") {
-                this.timers[i].observer = window.setTimeout(this.timers[i].handler, this.timers[i].timeout);
-            }
-        }
+        let obj = this.findTimer(name);
+        obj.observer = (obj.type == "interval") ?
+        window.setInterval(obj.handler, obj.timeout) :
+        window.setTimeout(obj.handler, obj.timeout)
     }
 
     listTimers () {
+        console.log(this.timers);
+    }
+
+    getTimers () {
         return this.timers;
     }
 }
+
+export default new TimerManager();
+
+window.TimerManager = TimerManager;
