@@ -62,4 +62,4 @@ class TimerManager {
 
 export default new TimerManager();
 
-window.TimerManager = TimerManager;
+window.TimerManager = new TimerManager();
